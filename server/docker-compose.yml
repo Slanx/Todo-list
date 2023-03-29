@@ -17,7 +17,7 @@ services:
     image: mongo
     restart: always
     networks:
-      - back
+      - server-db
     env_file:
       - .env
     volumes:
@@ -26,5 +26,5 @@ services:
       - ${MONGO_PORT}:${MONGO_PORT}
 
 networks:
-  back:
+  server-db:
     driver: bridge
