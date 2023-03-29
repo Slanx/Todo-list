@@ -1,0 +1,30 @@
+version: '3'
+services:
+  server:
+    container_name: app
+    build: .
+    ports:
+      - ${PORT}:${PORT}
+    networks:
+      - back
+    depends_on:
+      - db
+    env_file:
+      - .env
+    restart: always
+    command: npm run start:dev
+  db:
+    image: mongo
+    restart: always
+    networks:
+      - back
+    env_file:
+      - .env
+    volumes:
+      - ./mongo-data:/data/db
+    ports:
+      - ${MONGO_PORT}:${MONGO_PORT}
+
+networks:
+  back:
+    driver: bridge
