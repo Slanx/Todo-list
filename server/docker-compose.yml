@@ -21,8 +21,9 @@ services:
     env_file:
       - .env
     volumes:
-      - mongo-data:/data/db
+      - db_data:/data/db
       - ./docker/mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - db_config:/data/configdb
     ports:
       - ${MONGO_PORT}:${MONGO_PORT}
 
@@ -30,4 +31,7 @@ networks:
   server-db:
     driver: bridge
 volumes:
-  mongo-data:
+  db_data:
+    driver: local
+  db_config:
+    driver: local
