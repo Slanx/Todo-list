@@ -11,6 +11,8 @@ services:
       - mongodb
     env_file:
       - .env
+    volumes:
+      - ./src:/usr/src/app/src
     restart: always
     command: npm run start:dev
   mongodb:
