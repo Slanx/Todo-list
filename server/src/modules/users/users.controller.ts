@@ -1,54 +1,71 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
   Delete,
   HttpStatus,
   HttpCode,
+  NotFoundException,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { PasswordDto } from './dto/password.dto';
+import { UserParams } from 'src/common/decorators/user';
+import { Public } from 'src/common/decorators/public';
+import { ParseStringLowPipe } from 'src/common/pipes/ParseStringLow.pipe';
+import MongooseClassSerializerInterceptor from 'src/common/interceptors/mongooseClassSerialazer.interceptor';
+import { User } from './schemas/user.schema';
 
 @Controller('user')
+@UseInterceptors(MongooseClassSerializerInterceptor(User))
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  async create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
 
   @Get()
   async findAll() {
     return this.usersService.findAll();
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+  @Public()
+  @Get(':login')
+  async findOneByLogin(
+    @Param('login', new ParseStringLowPipe()) login: string,
+  ) {
+    const user = await this.usersService.findOneByLogin(login);
+
+    if (!user) {
+      throw new NotFoundException('This user does not exist');
+    }
+
+    return user;
   }
 
-  @Patch('password/:id')
+  @Patch('password')
   async updatePassword(
-    @Param('id') id: string,
+    @UserParams('userId') userId: string,
     @Body() updatePasswordDto: UpdatePasswordDto,
   ) {
-    return this.usersService.updatePassword(id, updatePasswordDto);
+    return this.usersService.updatePassword(userId, updatePasswordDto);
   }
 
-  @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
+  @Patch('')
+  async update(
+    @UserParams('userId') userId: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.update(userId, updateUserDto);
   }
 
-  @Delete(':id')
+  @Delete('')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  async remove(
+    @UserParams('userId') userId: string,
+    @Body() passwordDto: PasswordDto,
+  ) {
+    return this.usersService.remove(userId, passwordDto);
   }
 }

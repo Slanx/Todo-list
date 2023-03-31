@@ -12,6 +12,7 @@ import { hashPassword } from 'src/utils/hash';
 import { compare } from 'bcrypt';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { PasswordDto } from './dto/password.dto';
 
 @Injectable()
 export class UsersService {
@@ -69,9 +70,13 @@ export class UsersService {
       updatePasswordDto.newPassword,
     );
 
-    user.password = hashedNewPassword;
+    const updatedUser = this.userModel.findByIdAndUpdate(
+      id,
+      { $set: { password: hashedNewPassword } },
+      { new: true },
+    );
 
-    return user.save();
+    return updatedUser;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
@@ -88,18 +93,22 @@ export class UsersService {
     return user;
   }
 
-  async remove(id: string) {
-    const user = await this.userModel.findByIdAndDelete(id);
+  async remove(id: string, { password }: PasswordDto) {
+    const user = await this.findOne(id);
 
-    if (!user) {
-      throw new NotFoundException('This user does not exist');
+    const passwordMatch = await compare(password, user.password);
+
+    if (!passwordMatch) {
+      throw new ForbiddenException('Invalid password');
     }
+
+    await this.userModel.findByIdAndDelete(id);
 
     return user;
   }
 
   async findOneByLogin(login: string) {
-    const user = await this.userModel.findOne({ login });
+    const user = await this.userModel.findOne({ login: login }).exec();
 
     return user;
   }
